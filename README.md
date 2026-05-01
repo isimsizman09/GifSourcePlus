@@ -76,7 +76,7 @@ BetterDiscord plugins run inside Discord's desktop client and sometimes rely on 
 
 If a future Discord update breaks direct sending, the plugin should still fall back to copying the selected GIF URL.
 
-## Development
+## Maintainer Checks
 
 The project is intentionally simple: one plugin file, no production dependencies.
 
@@ -86,13 +86,13 @@ Syntax check:
 node --check .\GifSourcePlus.plugin.js
 ```
 
-Secret scan example:
+Optional credential string check before publishing:
 
 ```powershell
 Select-String -Path .\GifSourcePlus.plugin.js,.\README.md,.\CHANGELOG.md,.\LICENSE -Pattern "api_key|apikey|token|secret|password" -CaseSensitive:$false
 ```
 
-Expected matches are documentation and settings labels only, not real secrets.
+Expected matches are documentation and settings labels only, not real credentials.
 
 ## License
 
