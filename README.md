@@ -4,9 +4,12 @@
 
 **A polished BetterDiscord plugin that adds KLIPY as its own GIF source without replacing Discord's built-in GIF picker.**
 
-[![Version](https://img.shields.io/badge/version-0.2.1-5865F2?style=for-the-badge)](./CHANGELOG.md)
-[![BetterDiscord](https://img.shields.io/badge/BetterDiscord-plugin-3BA55D?style=for-the-badge)](https://betterdiscord.app/)
-[![License](https://img.shields.io/badge/license-MIT-2B2D31?style=for-the-badge)](./LICENSE)
+[![BetterDiscord](https://img.shields.io/badge/BETTERDISCORD-PLUGIN-5865F2?style=for-the-badge&labelColor=252936)](https://betterdiscord.app/)
+[![Version](https://img.shields.io/badge/VERSION-0.2.1-2BBE70?style=for-the-badge&labelColor=252936)](./CHANGELOG.md)
+[![License](https://img.shields.io/badge/LICENSE-MIT-F0B232?style=for-the-badge&labelColor=252936)](./LICENSE)
+[![KLIPY](https://img.shields.io/badge/KLIPY-SEPARATE%20GIF%20TAB-00A8FC?style=for-the-badge&labelColor=252936)](https://klipy.com/developers)
+
+[![Download GifSourcePlus](https://img.shields.io/badge/DOWNLOAD-GifSourcePlus.plugin.js-5865F2?style=for-the-badge&labelColor=111827)](https://github.com/isimsizman09/GifSourcePlus/releases/download/v0.2.1/GifSourcePlus.plugin.js)
 
 </div>
 
