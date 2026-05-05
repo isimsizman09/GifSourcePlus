@@ -5,11 +5,11 @@
 **A polished BetterDiscord plugin that adds KLIPY as its own GIF source without replacing Discord's built-in GIF picker.**
 
 [![BetterDiscord](https://img.shields.io/badge/BETTERDISCORD-PLUGIN-5865F2?style=for-the-badge&labelColor=252936)](https://betterdiscord.app/)
-[![Version](https://img.shields.io/badge/VERSION-0.2.1-2BBE70?style=for-the-badge&labelColor=252936)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/VERSION-0.2.3-2BBE70?style=for-the-badge&labelColor=252936)](./CHANGELOG.md)
 [![License](https://img.shields.io/badge/LICENSE-MIT-F0B232?style=for-the-badge&labelColor=252936)](./LICENSE)
 [![KLIPY](https://img.shields.io/badge/KLIPY-SEPARATE%20GIF%20TAB-00A8FC?style=for-the-badge&labelColor=252936)](https://klipy.com/developers)
 
-[![Download GifSourcePlus](https://img.shields.io/badge/DOWNLOAD-GifSourcePlus.plugin.js-5865F2?style=for-the-badge&labelColor=111827)](https://github.com/isimsizman09/GifSourcePlus/releases/download/v0.2.1/GifSourcePlus.plugin.js)
+[![Download GifSourcePlus](https://img.shields.io/badge/DOWNLOAD-GifSourcePlus.plugin.js-5865F2?style=for-the-badge&labelColor=111827)](https://github.com/isimsizman09/GifSourcePlus/releases/latest/download/GifSourcePlus.plugin.js)
 
 </div>
 
@@ -28,8 +28,9 @@ The plugin is designed for public distribution. It does **not** include a shared
 | Safe fallback | If Discord's send internals fail, the GIF URL is copied to the clipboard. |
 | User-owned API key | No shared key, no embedded secret, no public credential exposure. |
 | High-quality media mode | Prefers better KLIPY media fields such as `hd` and `gif` for previews and sends. |
-| 20-language settings | Settings text and API key guide are localized across 20 selectable languages. |
+| 20-language settings | Settings text, update preference, and API key guide are localized across 20 selectable languages. |
 | Ctrl+G shortcut | Optional shortcut opens the GIF picker directly on the KLIPY tab. |
+| Update notifications | Checks the public GitHub plugin file and offers one-click updates when a newer version is available. |
 | Clean shutdown | Removes injected UI, styles, observers, Flux listeners, timers, and pending requests. |
 
 ## Requirements
@@ -47,6 +48,12 @@ The plugin is designed for public distribution. It does **not** include a shared
 4. Open the plugin settings.
 5. Select your settings language, read the built-in API key guide, and paste your KLIPY API key.
 
+## Updates
+
+GifSourcePlus includes an optional update check, enabled by default. On startup it reads the public raw plugin file from GitHub, compares the metadata version, and shows a BetterDiscord update notification when a newer version is available. Clicking `Update` replaces the installed `GifSourcePlus.plugin.js` file.
+
+Users can disable update checks in the plugin settings. Manual updates still work by downloading the latest release asset again.
+
 ## How It Works
 
 GifSourcePlus watches for Discord's GIF picker and injects a dedicated `KLIPY` tab into the existing picker layout. KLIPY search and trending results are rendered in a separate panel with `Powered by KLIPY` attribution.
@@ -60,7 +67,7 @@ For compatibility, the plugin uses current BetterDiscord APIs such as `BdApi.Dat
 - No shared KLIPY API key is bundled.
 - Your KLIPY API key is stored only in BetterDiscord local plugin data.
 - The plugin does not collect analytics.
-- Network requests are limited to KLIPY API calls needed for GIF search/trending.
+- Network requests are limited to KLIPY API calls needed for GIF search/trending and the optional GitHub raw-file update check.
 - If message sending fails, only the selected GIF URL is copied to your clipboard as a fallback.
 
 ## KLIPY API Key

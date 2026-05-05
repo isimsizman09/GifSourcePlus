@@ -2,17 +2,21 @@
  * @name GifSourcePlus
  * @author isimsizman09
  * @description Adds a separate KLIPY GIF tab next to Discord's GIF picker without mixing KLIPY results with Giphy results.
- * @version 0.2.1
+ * @version 0.2.3
  * @website https://github.com/isimsizman09/GifSourcePlus
  * @source https://github.com/isimsizman09/GifSourcePlus/blob/main/GifSourcePlus.plugin.js
+ * @updateUrl https://raw.githubusercontent.com/isimsizman09/GifSourcePlus/main/GifSourcePlus.plugin.js
  */
 
 "use strict";
 
+const fs = require("fs");
+const path = require("path");
+
 const config = {
     info: {
         name: "GifSourcePlus",
-        version: "0.2.1",
+        version: "0.2.3",
         description: "Adds a separate KLIPY GIF tab next to Discord's GIF picker.",
         authors: [{name: "isimsizman09"}]
     }
@@ -20,6 +24,9 @@ const config = {
 
 const PLUGIN_NAME = config.info.name;
 const KLIPY_BASE = "https://api.klipy.com";
+const UPDATE_URL = "https://raw.githubusercontent.com/isimsizman09/GifSourcePlus/main/GifSourcePlus.plugin.js";
+const UPDATE_CHECK_DELAY_MS = 2500;
+const UPDATE_CHECK_TIMEOUT_MS = 15000;
 
 const DEFAULT_SETTINGS = Object.freeze({
     enabled: true,
@@ -30,7 +37,8 @@ const DEFAULT_SETTINGS = Object.freeze({
     endpointMode: "auto",
     insertMode: "send",
     qualityMode: "high",
-    shortcutEnabled: true
+    shortcutEnabled: true,
+    checkForUpdates: true
 });
 
 const API_KEY_GUIDES = Object.freeze({
@@ -675,6 +683,89 @@ const SETTINGS_COPY = Object.freeze({
     }
 });
 
+const UPDATE_SETTING_COPY = Object.freeze({
+    en: {
+        sections: {updates: "Updates"},
+        fields: {checkForUpdates: ["Check for updates", "Checks the GitHub raw plugin file on startup and shows an update button when a newer version is available."]}
+    },
+    tr: {
+        sections: {updates: "Güncellemeler"},
+        fields: {checkForUpdates: ["Güncellemeleri kontrol et", "Başlangıçta GitHub raw plugin dosyasını kontrol eder ve daha yeni sürüm varsa güncelleme butonu gösterir."]}
+    },
+    zh: {
+        sections: {updates: "更新"},
+        fields: {checkForUpdates: ["检查更新", "启动时检查 GitHub raw 插件文件，如果有新版本则显示更新按钮。"]}
+    },
+    hi: {
+        sections: {updates: "Updates"},
+        fields: {checkForUpdates: ["Updates check karein", "Startup par GitHub raw plugin file check karta hai aur naya version ho to update button dikhata hai."]}
+    },
+    es: {
+        sections: {updates: "Actualizaciones"},
+        fields: {checkForUpdates: ["Buscar actualizaciones", "Comprueba el archivo raw del plugin en GitHub al iniciar y muestra un boton si hay una version nueva."]}
+    },
+    ar: {
+        sections: {updates: "التحديثات"},
+        fields: {checkForUpdates: ["التحقق من التحديثات", "يتحقق من ملف الإضافة الخام على GitHub عند البدء ويعرض زر تحديث عند توفر إصدار أحدث."]}
+    },
+    fr: {
+        sections: {updates: "Mises a jour"},
+        fields: {checkForUpdates: ["Verifier les mises a jour", "Verifie le fichier raw du plugin sur GitHub au demarrage et affiche un bouton si une nouvelle version existe."]}
+    },
+    de: {
+        sections: {updates: "Updates"},
+        fields: {checkForUpdates: ["Nach Updates suchen", "Prueft beim Start die Raw-Plugin-Datei auf GitHub und zeigt bei einer neueren Version einen Update-Button."]}
+    },
+    pt: {
+        sections: {updates: "Atualizacoes"},
+        fields: {checkForUpdates: ["Verificar atualizacoes", "Verifica o arquivo raw do plugin no GitHub ao iniciar e mostra um botao quando ha uma versao nova."]}
+    },
+    it: {
+        sections: {updates: "Aggiornamenti"},
+        fields: {checkForUpdates: ["Controlla aggiornamenti", "Controlla il file raw del plugin su GitHub all'avvio e mostra un pulsante se esiste una nuova versione."]}
+    },
+    id: {
+        sections: {updates: "Pembaruan"},
+        fields: {checkForUpdates: ["Periksa pembaruan", "Memeriksa file raw plugin di GitHub saat mulai dan menampilkan tombol update jika ada versi baru."]}
+    },
+    vi: {
+        sections: {updates: "Cap nhat"},
+        fields: {checkForUpdates: ["Kiem tra cap nhat", "Kiem tra file raw plugin tren GitHub khi khoi dong va hien nut cap nhat neu co ban moi."]}
+    },
+    sw: {
+        sections: {updates: "Masasisho"},
+        fields: {checkForUpdates: ["Angalia masasisho", "Hukagua faili raw ya plugin kwenye GitHub wakati wa kuanza na huonyesha kitufe cha kusasisha ikiwa kuna toleo jipya."]}
+    },
+    fil: {
+        sections: {updates: "Updates"},
+        fields: {checkForUpdates: ["Tingnan ang updates", "Tinitingnan ang GitHub raw plugin file sa startup at nagpapakita ng update button kapag may mas bagong version."]}
+    },
+    ru: {
+        sections: {updates: "Обновления"},
+        fields: {checkForUpdates: ["Проверять обновления", "При запуске проверяет raw-файл плагина на GitHub и показывает кнопку обновления, если доступна новая версия."]}
+    },
+    ja: {
+        sections: {updates: "更新"},
+        fields: {checkForUpdates: ["更新を確認", "起動時に GitHub raw plugin file を確認し、新しい version がある場合は update button を表示します。"]}
+    },
+    ko: {
+        sections: {updates: "업데이트"},
+        fields: {checkForUpdates: ["업데이트 확인", "시작 시 GitHub raw plugin file을 확인하고 새 version이 있으면 update button을 표시합니다."]}
+    },
+    bn: {
+        sections: {updates: "Updates"},
+        fields: {checkForUpdates: ["Update check করুন", "Startup-এ GitHub raw plugin file check করে এবং নতুন version থাকলে update button দেখায়।"]}
+    },
+    ur: {
+        sections: {updates: "Updates"},
+        fields: {checkForUpdates: ["Updates check karein", "Startup par GitHub raw plugin file check karta hai aur naya version ho to update button dikhata hai."]}
+    },
+    fa: {
+        sections: {updates: "به روزرسانی ها"},
+        fields: {checkForUpdates: ["بررسی به روزرسانی", "هنگام شروع فایل raw پلاگین در GitHub را بررسی می کند و اگر نسخه جدید باشد دکمه update نشان می دهد."]}
+    }
+});
+
 module.exports = class GifSourcePlus {
     constructor() {
         this.settings = {...DEFAULT_SETTINGS};
@@ -683,6 +774,7 @@ module.exports = class GifSourcePlus {
         this.moduleCache = new Map();
         this.fluxSubscriptions = [];
         this.injectTimer = null;
+        this.updateCheckTimer = null;
         this.styleId = "gsp-klipy-styles";
         this.boundTryInject = this.tryInject.bind(this);
         this.boundScheduleInject = this.scheduleInject.bind(this);
@@ -696,6 +788,7 @@ module.exports = class GifSourcePlus {
         this.startFluxSubscriptions();
         document.addEventListener("keydown", this.boundShortcutKeyDown, true);
         this.scheduleInject();
+        this.scheduleUpdateCheck();
         this.toast("GifSourcePlus enabled.", "info");
     }
 
@@ -708,6 +801,11 @@ module.exports = class GifSourcePlus {
         if (this.injectTimer) {
             clearTimeout(this.injectTimer);
             this.injectTimer = null;
+        }
+
+        if (this.updateCheckTimer) {
+            clearTimeout(this.updateCheckTimer);
+            this.updateCheckTimer = null;
         }
 
         this.stopFluxSubscriptions();
@@ -746,6 +844,9 @@ module.exports = class GifSourcePlus {
                 this.createSelectSetting(copy.fields.qualityMode, "qualityMode", this.getTranslatedOptions(copy, "qualityMode", ["high", "balanced"])),
                 this.createToggleSetting(copy.fields.shortcutEnabled, "shortcutEnabled")
             ]),
+            this.createSettingsSection(copy.sections.updates, [
+                this.createToggleSetting(copy.fields.checkForUpdates, "checkForUpdates")
+            ]),
             this.createSettingsFooter(copy)
         );
 
@@ -763,6 +864,7 @@ module.exports = class GifSourcePlus {
         merged.insertMode = ["send", "copy"].includes(merged.insertMode) ? merged.insertMode : DEFAULT_SETTINGS.insertMode;
         merged.qualityMode = ["high", "balanced"].includes(merged.qualityMode) ? merged.qualityMode : DEFAULT_SETTINGS.qualityMode;
         merged.shortcutEnabled = merged.shortcutEnabled !== false;
+        merged.checkForUpdates = merged.checkForUpdates !== false;
         merged.apiKey = typeof merged.apiKey === "string" ? merged.apiKey.trim() : "";
         merged.enabled = Boolean(merged.enabled);
         return merged;
@@ -779,6 +881,147 @@ module.exports = class GifSourcePlus {
         }
 
         this.scheduleInject();
+    }
+
+    scheduleUpdateCheck() {
+        if (!this.settings.checkForUpdates) return;
+        if (this.updateCheckTimer) clearTimeout(this.updateCheckTimer);
+        this.updateCheckTimer = setTimeout(() => {
+            this.updateCheckTimer = null;
+            this.checkForUpdate();
+        }, UPDATE_CHECK_DELAY_MS);
+    }
+
+    async checkForUpdate() {
+        try {
+            const remoteFile = await this.fetchUpdateFile();
+            const remoteMeta = this.parsePluginMeta(remoteFile);
+            this.validateUpdateFile(remoteMeta, remoteFile);
+
+            if (!this.isRemoteVersionNewer(remoteMeta.version, config.info.version)) return false;
+            this.showUpdateNotification(remoteMeta, remoteFile);
+            return true;
+        } catch (error) {
+            console.warn(`[${PLUGIN_NAME}] Failed to check for updates.`, error);
+            return false;
+        }
+    }
+
+    async fetchUpdateFile() {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), UPDATE_CHECK_TIMEOUT_MS);
+
+        try {
+            const response = BdApi.Net && typeof BdApi.Net.fetch === "function"
+                ? await BdApi.Net.fetch(UPDATE_URL, {
+                    method: "GET",
+                    signal: controller.signal,
+                    headers: {"Accept": "text/plain"}
+                })
+                : await fetch(UPDATE_URL, {
+                    method: "GET",
+                    signal: controller.signal,
+                    headers: {"Accept": "text/plain"}
+                });
+
+            if (!response || !response.ok) {
+                throw new Error(`Update request failed with status ${response?.status || "unknown"}.`);
+            }
+
+            return response.text();
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    parsePluginMeta(fileContent) {
+        const match = String(fileContent || "").match(/^\s*\/\*\*([\s\S]*?)\*\//);
+        if (!match) throw new Error("Remote plugin metadata block is missing.");
+
+        const meta = {};
+        for (const rawLine of match[1].split(/\r?\n/)) {
+            const line = rawLine.replace(/^\s*\*\s?/, "").trim();
+            const field = line.match(/^@(\w+)\s+(.+)$/);
+            if (field) meta[field[1]] = field[2].trim();
+        }
+
+        return meta;
+    }
+
+    validateUpdateFile(remoteMeta, remoteFile) {
+        if (remoteMeta.name !== PLUGIN_NAME) throw new Error(`Unexpected update name: ${remoteMeta.name || "missing"}.`);
+        if (!remoteMeta.version) throw new Error("Remote update version is missing.");
+        if (!String(remoteFile).includes("module.exports = class GifSourcePlus")) {
+            throw new Error("Remote update file does not look like GifSourcePlus.");
+        }
+    }
+
+    isRemoteVersionNewer(remoteVersion, currentVersion) {
+        const remote = this.parseSemver(remoteVersion);
+        const current = this.parseSemver(currentVersion);
+        if (!remote || !current) return false;
+
+        for (let index = 0; index < 3; index += 1) {
+            if (remote[index] > current[index]) return true;
+            if (remote[index] < current[index]) return false;
+        }
+
+        return false;
+    }
+
+    parseSemver(version) {
+        const match = String(version || "").trim().match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+        if (!match) return null;
+        return match.slice(1, 4).map((part) => Number.parseInt(part, 10));
+    }
+
+    showUpdateNotification(remoteMeta, remoteFile) {
+        const title = `${PLUGIN_NAME} update available`;
+        const content = `Version ${remoteMeta.version} is available. Current version: ${config.info.version}.`;
+        const update = async () => {
+            try {
+                await this.installUpdate(remoteFile);
+                this.toast(`${PLUGIN_NAME} updated to ${remoteMeta.version}. Reload or restart Discord if it does not reload automatically.`, "success");
+            } catch (error) {
+                console.error(`[${PLUGIN_NAME}] Failed to install update.`, error);
+                this.toast("Could not install the update. Download the latest plugin file manually.", "error");
+            }
+        };
+
+        if (BdApi.UI && typeof BdApi.UI.showNotification === "function") {
+            BdApi.UI.showNotification({
+                title,
+                content,
+                actions: [{label: "Update", onClick: update}]
+            });
+            return;
+        }
+
+        if (BdApi.UI && typeof BdApi.UI.showConfirmationModal === "function") {
+            BdApi.UI.showConfirmationModal(title, content, {
+                confirmText: "Update",
+                cancelText: "Later",
+                onConfirm: update
+            });
+            return;
+        }
+
+        this.toast(`${title}: ${remoteMeta.version}`, "info");
+    }
+
+    async installUpdate(remoteFile) {
+        const filePath = this.getPluginFilePath();
+        await fs.promises.writeFile(filePath, remoteFile, "utf8");
+    }
+
+    getPluginFilePath() {
+        if (typeof __filename === "string" && path.basename(__filename).toLowerCase().endsWith(".plugin.js")) {
+            return __filename;
+        }
+
+        const pluginsFolder = BdApi.Plugins && BdApi.Plugins.folder;
+        if (!pluginsFolder) throw new Error("BetterDiscord plugins folder is unavailable.");
+        return path.join(pluginsFolder, `${PLUGIN_NAME}.plugin.js`);
     }
 
     injectStyles() {
@@ -1221,6 +1464,7 @@ module.exports = class GifSourcePlus {
 
         event.preventDefault();
         event.stopPropagation();
+        event.stopImmediatePropagation?.();
         this.openKlipyFromShortcut();
     }
 
@@ -1259,22 +1503,55 @@ module.exports = class GifSourcePlus {
     }
 
     findGifPickerButton() {
-        const candidates = Array.from(document.querySelectorAll("button,[role='button']"));
-        return candidates.find((candidate) => {
-            if (!(candidate instanceof HTMLElement) || !this.isVisibleButton(candidate)) return false;
-            if (candidate.closest(".gsp-klipy-panel") || candidate.closest(".bd-modal-root")) return false;
-            const label = [
-                candidate.getAttribute("aria-label"),
-                candidate.getAttribute("title"),
-                candidate.textContent
-            ].filter(Boolean).join(" ");
-            return /\bgifs?\b/i.test(label);
-        }) || null;
+        for (const root of this.getComposerRoots()) {
+            const candidates = Array.from(root.querySelectorAll("button,[role='button']"));
+            const button = candidates.find((candidate) => this.isLikelyGifPickerButton(candidate));
+            if (button) return button;
+        }
+
+        return null;
+    }
+
+    getComposerRoots() {
+        const roots = new Set();
+        const activeRoot = document.activeElement instanceof Element
+            ? document.activeElement.closest("form,[class*='channelTextArea']")
+            : null;
+        if (activeRoot instanceof HTMLElement) roots.add(activeRoot);
+
+        for (const root of document.querySelectorAll("form,[class*='channelTextArea']")) {
+            if (root instanceof HTMLElement) roots.add(root);
+        }
+
+        return Array.from(roots).filter((root) => {
+            if (!this.isVisibleComposerRoot(root)) return false;
+            if (root.closest(".gsp-klipy-panel") || root.closest(".bd-modal-root")) return false;
+            return Boolean(root.querySelector("textarea,[contenteditable='true'],[role='textbox']"));
+        });
+    }
+
+    isVisibleComposerRoot(root) {
+        const rect = root.getBoundingClientRect();
+        return rect.width >= 240 && rect.height >= 32;
+    }
+
+    isLikelyGifPickerButton(candidate) {
+        if (!(candidate instanceof HTMLElement) || !this.isVisibleButton(candidate)) return false;
+        if (candidate.closest("[class*='message'],[class*='embed'],[class*='media'],[class*='imageWrapper']")) return false;
+        if (candidate.hasAttribute("disabled") || candidate.getAttribute("aria-disabled") === "true") return false;
+
+        const label = [
+            candidate.getAttribute("aria-label"),
+            candidate.getAttribute("title"),
+            candidate.textContent
+        ].filter(Boolean).join(" ");
+
+        return /\bgifs?\b/i.test(label);
     }
 
     isVisibleButton(node) {
         const rect = node.getBoundingClientRect();
-        return rect.width > 0 && rect.height > 0;
+        return rect.width >= 16 && rect.height >= 16 && rect.width <= 64 && rect.height <= 64;
     }
 
     tryInject() {
@@ -2039,7 +2316,10 @@ module.exports = class GifSourcePlus {
     }
 
     getSettingsCopy() {
-        return this.mergeSettingsCopy(SETTINGS_COPY.en, SETTINGS_COPY[this.settings.guideLanguage] || SETTINGS_COPY.en);
+        const language = this.settings.guideLanguage;
+        const base = this.mergeSettingsCopy(SETTINGS_COPY.en, UPDATE_SETTING_COPY.en);
+        const localized = this.mergeSettingsCopy(SETTINGS_COPY[language] || SETTINGS_COPY.en, UPDATE_SETTING_COPY[language] || UPDATE_SETTING_COPY.en);
+        return this.mergeSettingsCopy(base, localized);
     }
 
     mergeSettingsCopy(base, override) {

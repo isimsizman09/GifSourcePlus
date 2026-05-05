@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.3
+
+- Added GitHub raw-file update checks with a BetterDiscord notification and one-click update action.
+- Added a settings toggle for automatic update checks, enabled by default for new installs.
+- Added `@updateUrl` metadata pointing to the public raw plugin file.
+
+## 0.2.2
+
+- Fixed the `Ctrl+G` shortcut fallback so it only targets Discord's message composer GIF picker button.
+- Prevented chat GIF/media previews from being clicked accidentally when another user's GIF is visible in the conversation.
+- Added a composer-specific visibility check for the shortcut path instead of reusing the taller GIF picker panel visibility threshold.
+- Documented the GitHub-only manual update behavior and BetterDiscord website/store update path.
+
 ## 0.2.1
 
 - Fixed checkbox setting layout on themes where the input stretched into an empty dark area.
