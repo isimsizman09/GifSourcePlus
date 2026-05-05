@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/LICENSE-MIT-F0B232?style=for-the-badge&labelColor=252936)](./LICENSE)
 [![KLIPY](https://img.shields.io/badge/KLIPY-SEPARATE%20GIF%20TAB-00A8FC?style=for-the-badge&labelColor=252936)](https://klipy.com/developers)
 
-[![Download GifSourcePlus](https://img.shields.io/badge/DOWNLOAD-GifSourcePlus.plugin.js-5865F2?style=for-the-badge&labelColor=111827)](https://raw.githubusercontent.com/isimsizman09/GifSourcePlus/main/GifSourcePlus.plugin.js)
+[![Download GifSourcePlus](https://img.shields.io/badge/DOWNLOAD-GifSourcePlus.plugin.js-5865F2?style=for-the-badge&labelColor=111827)](https://github.com/isimsizman09/GifSourcePlus/releases/latest/download/GifSourcePlus.plugin.js)
 
 </div>
 
@@ -41,7 +41,7 @@ The plugin is designed for public distribution. It does **not** include a shared
 
 ## Installation
 
-1. Download `GifSourcePlus.plugin.js` from this repository or the download button above.
+1. Download `GifSourcePlus.plugin.js` from this repository, the download button above, or the latest release assets.
 2. Move it into your BetterDiscord plugins folder:
    - Windows: `%appdata%\BetterDiscord\plugins`
 3. Open Discord and enable `GifSourcePlus` in BetterDiscord settings.
