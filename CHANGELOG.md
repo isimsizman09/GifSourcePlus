@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.5
+
+- Hardened the one-click updater install path used by the update notification.
+- Switched update installation to BetterDiscord-compatible file writes instead of relying on `fs.promises`.
+- Added a post-write metadata check so failed or partial update writes are reported instead of showing false success.
+- Improved plugin file path resolution for installs where BetterDiscord exposes the active plugin filename.
+
 ## 0.2.4
 
 - Fixed KLIPY GIF sends after Discord changed the `sendMessage` argument layout again.

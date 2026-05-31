@@ -2,7 +2,7 @@
  * @name GifSourcePlus
  * @author isimsizman09
  * @description Adds a separate KLIPY GIF tab next to Discord's GIF picker without mixing KLIPY results with Giphy results.
- * @version 0.2.4
+ * @version 0.2.5
  * @website https://github.com/isimsizman09/GifSourcePlus
  * @source https://github.com/isimsizman09/GifSourcePlus/blob/main/GifSourcePlus.plugin.js
  * @updateUrl https://raw.githubusercontent.com/isimsizman09/GifSourcePlus/main/GifSourcePlus.plugin.js
@@ -16,7 +16,7 @@ const path = require("path");
 const config = {
     info: {
         name: "GifSourcePlus",
-        version: "0.2.4",
+        version: "0.2.5",
         description: "Adds a separate KLIPY GIF tab next to Discord's GIF picker.",
         authors: [{name: "isimsizman09"}]
     }
@@ -1011,17 +1011,81 @@ module.exports = class GifSourcePlus {
 
     async installUpdate(remoteFile) {
         const filePath = this.getPluginFilePath();
-        await fs.promises.writeFile(filePath, remoteFile, "utf8");
+        await this.writeTextFile(filePath, remoteFile);
+
+        const installedFile = await this.readTextFile(filePath);
+        const installedMeta = this.parsePluginMeta(installedFile);
+        if (installedMeta.name !== PLUGIN_NAME || installedMeta.version !== this.parsePluginMeta(remoteFile).version) {
+            throw new Error("Installed update metadata did not match the downloaded plugin file.");
+        }
     }
 
     getPluginFilePath() {
-        if (typeof __filename === "string" && path.basename(__filename).toLowerCase().endsWith(".plugin.js")) {
-            return __filename;
-        }
-
         const pluginsFolder = BdApi.Plugins && BdApi.Plugins.folder;
         if (!pluginsFolder) throw new Error("BetterDiscord plugins folder is unavailable.");
-        return path.join(pluginsFolder, `${PLUGIN_NAME}.plugin.js`);
+
+        const normalizedFolder = path.resolve(pluginsFolder);
+        const candidates = [];
+        const addon = this.getOwnAddon();
+
+        if (addon) {
+            candidates.push(addon.filename, addon.fileName, addon.file, addon.path, addon.id);
+        }
+
+        if (typeof module !== "undefined" && typeof module.filename === "string") candidates.push(module.filename);
+        if (typeof __filename === "string") candidates.push(__filename);
+        candidates.push(`${PLUGIN_NAME}.plugin.js`);
+
+        for (const candidate of candidates) {
+            const resolved = this.resolvePluginFileCandidate(candidate, normalizedFolder);
+            if (resolved && fs.existsSync(resolved)) return resolved;
+        }
+
+        const fallback = path.join(normalizedFolder, `${PLUGIN_NAME}.plugin.js`);
+        const resolvedFallback = this.resolvePluginFileCandidate(fallback, normalizedFolder);
+        if (!resolvedFallback) throw new Error("Resolved update path is outside the BetterDiscord plugins folder.");
+        return resolvedFallback;
+    }
+
+    getOwnAddon() {
+        const plugins = BdApi.Plugins;
+        if (!plugins || typeof plugins.get !== "function") return null;
+
+        return plugins.get(PLUGIN_NAME)
+            || plugins.get(`${PLUGIN_NAME}.plugin.js`)
+            || null;
+    }
+
+    resolvePluginFileCandidate(candidate, pluginsFolder) {
+        if (typeof candidate !== "string" || !candidate.trim()) return null;
+
+        const filePath = path.isAbsolute(candidate)
+            ? path.resolve(candidate)
+            : path.resolve(pluginsFolder, candidate);
+        if (!path.basename(filePath).toLowerCase().endsWith(".plugin.js")) return null;
+
+        const relative = path.relative(pluginsFolder, filePath);
+        if (relative.startsWith("..") || path.isAbsolute(relative)) return null;
+
+        return filePath;
+    }
+
+    writeTextFile(filePath, content) {
+        return new Promise((resolve, reject) => {
+            fs.writeFile(filePath, content, "utf8", (error) => {
+                if (error) reject(error);
+                else resolve();
+            });
+        });
+    }
+
+    readTextFile(filePath) {
+        return new Promise((resolve, reject) => {
+            fs.readFile(filePath, "utf8", (error, content) => {
+                if (error) reject(error);
+                else resolve(content);
+            });
+        });
     }
 
     injectStyles() {
