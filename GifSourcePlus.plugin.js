@@ -2,7 +2,7 @@
  * @name GifSourcePlus
  * @author isimsizman09
  * @description Adds a separate KLIPY GIF tab next to Discord's GIF picker without mixing KLIPY results with Giphy results.
- * @version 0.2.3
+ * @version 0.2.4
  * @website https://github.com/isimsizman09/GifSourcePlus
  * @source https://github.com/isimsizman09/GifSourcePlus/blob/main/GifSourcePlus.plugin.js
  * @updateUrl https://raw.githubusercontent.com/isimsizman09/GifSourcePlus/main/GifSourcePlus.plugin.js
@@ -16,7 +16,7 @@ const path = require("path");
 const config = {
     info: {
         name: "GifSourcePlus",
-        version: "0.2.3",
+        version: "0.2.4",
         description: "Adds a separate KLIPY GIF tab next to Discord's GIF picker.",
         authors: [{name: "isimsizman09"}]
     }
@@ -2133,8 +2133,13 @@ module.exports = class GifSourcePlus {
             const messageActions = this.getMessageActions();
             if (!channelId || !messageActions || typeof messageActions.sendMessage !== "function") return false;
 
-            await this.invokeSendMessage(messageActions, channelId, this.createMessagePayload(url));
-            return true;
+            const message = this.createMessagePayload(url);
+            const sent = this.isYabdp4NitroEnabled() && typeof messageActions._sendMessage === "function"
+                ? await this.invokeYabdpCompatibleSend(messageActions, channelId, message)
+                : await this.invokeSendMessage(messageActions, channelId, message);
+            if (!sent) return false;
+
+            return await this.confirmMessageSent(channelId, message);
         }
         catch (error) {
             console.error(`[${PLUGIN_NAME}] Failed to send KLIPY GIF.`, error);
@@ -2144,18 +2149,14 @@ module.exports = class GifSourcePlus {
 
     async invokeSendMessage(messageActions, channelId, message) {
         const nonceOptions = {nonce: message.nonce};
-        const attempts = [
-            () => messageActions.sendMessage(channelId, message, nonceOptions),
-            () => messageActions.sendMessage(channelId, message, undefined, nonceOptions),
-            () => messageActions.sendMessage(channelId, message, {}, nonceOptions)
-        ];
+        const attempts = this.buildSendMessageAttempts(messageActions, channelId, message, nonceOptions);
         let lastError = null;
 
         for (const attempt of attempts) {
             try {
                 const result = attempt();
                 if (result && typeof result.then === "function") await result;
-                return;
+                return true;
             }
             catch (error) {
                 lastError = error;
@@ -2166,8 +2167,60 @@ module.exports = class GifSourcePlus {
         throw lastError;
     }
 
+    async invokeYabdpCompatibleSend(messageActions, channelId, message) {
+        const directSendMessage = messageActions._sendMessage.bind(messageActions);
+        const options = {
+            nonce: message.nonce,
+            // YABDP4Nitro treats any defined activityAction as a native Discord action and passes it through untouched.
+            activityAction: null
+        };
+        const result = directSendMessage(channelId, message, options);
+        if (result && typeof result.then === "function") await result;
+        return true;
+    }
+
+    buildSendMessageAttempts(messageActions, channelId, message, options) {
+        const sendMessage = messageActions.sendMessage.bind(messageActions);
+        const directSendMessage = typeof messageActions._sendMessage === "function"
+            ? messageActions._sendMessage.bind(messageActions)
+            : null;
+        const usesFourthArgumentOptions = this.sendMessageUsesFourthArgumentOptions(messageActions.sendMessage);
+        const modernAttempts = [
+            () => sendMessage(channelId, message, true, options),
+            () => sendMessage(channelId, message, false, options)
+        ];
+        const legacyAttempts = [
+            () => sendMessage(channelId, message, options)
+        ];
+        const attempts = usesFourthArgumentOptions
+            ? modernAttempts.concat(legacyAttempts)
+            : legacyAttempts.concat(modernAttempts);
+
+        if (directSendMessage) attempts.push(() => directSendMessage(channelId, message, options));
+        return attempts;
+    }
+
+    sendMessageUsesFourthArgumentOptions(sendMessage) {
+        const source = Function.prototype.toString.call(sendMessage);
+        return /arguments\.length\s*>\s*3|\.nonce\s*\?\?|\bnonce\s*:\s*/.test(source);
+    }
+
     isNonceSendError(error) {
-        return /nonce/i.test(error?.message || "");
+        return /nonce|Cannot read properties of undefined/i.test(error?.message || "");
+    }
+
+    async confirmMessageSent(channelId, message) {
+        const messageStore = this.getMessageStore();
+        if (!messageStore) return true;
+
+        for (let attempt = 0; attempt < 24; attempt += 1) {
+            const found = this.hasMessageWithNonce(messageStore, channelId, message.nonce);
+            if (found === null) return true;
+            if (found) return true;
+            await this.delay(125);
+        }
+
+        return false;
     }
 
     createMessagePayload(content) {
@@ -2226,6 +2279,24 @@ module.exports = class GifSourcePlus {
         }, (module) => typeof module?.sendMessage === "function");
     }
 
+    getMessageStore() {
+        return this.getCachedModule("MessageStore", () => {
+            if (!BdApi.Webpack) return null;
+            if (typeof BdApi.Webpack.getStore === "function") {
+                const store = BdApi.Webpack.getStore("MessageStore");
+                if (store) return store;
+            }
+            if (BdApi.Webpack.Stores?.MessageStore) return BdApi.Webpack.Stores.MessageStore;
+            if (typeof BdApi.Webpack.getByKeys === "function") {
+                return BdApi.Webpack.getByKeys("getMessage", "getMessages");
+            }
+            if (typeof BdApi.Webpack.getModule === "function") {
+                return BdApi.Webpack.getModule((module) => module?.getMessage && module?.getMessages);
+            }
+            return null;
+        }, (store) => typeof store?.getMessages === "function" || typeof store?.getMessage === "function");
+    }
+
     getFluxDispatcher() {
         return this.getCachedModule("FluxDispatcher", () => {
             if (!BdApi.Webpack) return null;
@@ -2253,6 +2324,50 @@ module.exports = class GifSourcePlus {
 
         this.moduleCache.delete(key);
         return null;
+    }
+
+    hasMessageWithNonce(messageStore, channelId, nonce) {
+        const messages = this.getRecentMessages(messageStore, channelId);
+        if (!messages) return null;
+        return messages.some((message) => String(message?.nonce || "") === String(nonce));
+    }
+
+    getRecentMessages(messageStore, channelId) {
+        const state = messageStore.getMessages?.(channelId);
+        if (Array.isArray(state)) return state;
+        if (Array.isArray(state?._array)) return state._array;
+        if (Array.isArray(state?.array)) return state.array;
+        if (typeof state?.toArray === "function") return state.toArray();
+        if (state?._map && typeof state._map.values === "function") return Array.from(state._map.values());
+        if (state?.map && typeof state.map.values === "function") return Array.from(state.map.values());
+        return null;
+    }
+
+    isYabdp4NitroEnabled() {
+        try {
+            const plugins = BdApi.Plugins;
+            if (!plugins) return false;
+            if (typeof plugins.isEnabled === "function") return Boolean(plugins.isEnabled("YABDP4Nitro"));
+
+            const plugin = typeof plugins.get === "function"
+                ? plugins.get("YABDP4Nitro")
+                : null;
+            if (plugin) return plugin.enabled !== false && plugin.started !== false;
+
+            if (typeof plugins.getAll === "function") {
+                return plugins.getAll()
+                    .some((entry) => entry?.name === "YABDP4Nitro" && entry.enabled !== false && entry.started !== false);
+            }
+
+            return false;
+        }
+        catch (_) {
+            return false;
+        }
+    }
+
+    delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
     getChannelIdFromLocation() {

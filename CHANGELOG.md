@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.4
+
+- Fixed KLIPY GIF sends after Discord changed the `sendMessage` argument layout again.
+- Prefer the current four-argument `sendMessage(channelId, message, shouldSend, options)` shape so nonce metadata is always passed in the options argument.
+- Kept legacy and direct `_sendMessage` fallbacks for older Discord builds.
+- Added a YABDP4Nitro compatibility path that bypasses its message-send patch for plain KLIPY GIF URL sends.
+- Confirm sends by checking the outgoing message nonce in Discord's MessageStore when available.
+
 ## 0.2.3
 
 - Added GitHub raw-file update checks with a BetterDiscord notification and one-click update action.
